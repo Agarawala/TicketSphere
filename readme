@@ -1,0 +1,273 @@
+# Movie Ticket Booking System Backend
+
+A complete backend project built using **Node.js**, **Express**, and the **filesystem (fs)** as a persistent database. This system allows users to sign up, browse movies, book tickets, update bookings, cancel bookings, and view booking summaries.
+
+---
+
+## 📌 Project Overview
+
+This backend simulates a real-world movie ticket booking system. All data is stored in a `data.txt` file in JSON format, and **every change must be written back** using `fs.writeFileSync` to ensure persistence.
+
+---
+
+## 📂 Project Structure
+
+```
+movie-booking-backend/
+├── server.js
+├── data.txt
+├── package.json
+```
+
+---
+
+## 📦 Installation
+
+```bash
+npm install
+```
+
+---
+
+## 📄 Initial Data (data.txt)
+
+```json
+{
+  "users": [],
+  "movies": [
+    {
+      "id": 1,
+      "title": "Inception",
+      "genre": "Sci-Fi",
+      "duration": 148,
+      "shows": [
+        { "showId": 101, "time": "10:00 AM", "pricePerSeat": 200, "availableSeats": 50 },
+        { "showId": 102, "time": "2:00 PM", "pricePerSeat": 250, "availableSeats": 50 },
+        { "showId": 103, "time": "6:00 PM", "pricePerSeat": 300, "availableSeats": 50 }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "The Dark Knight",
+      "genre": "Action",
+      "duration": 152,
+      "shows": [
+        { "showId": 201, "time": "11:00 AM", "pricePerSeat": 200, "availableSeats": 50 },
+        { "showId": 202, "time": "3:00 PM", "pricePerSeat": 250, "availableSeats": 50 },
+        { "showId": 203, "time": "7:00 PM", "pricePerSeat": 300, "availableSeats": 50 }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Interstellar",
+      "genre": "Sci-Fi",
+      "duration": 169,
+      "shows": [
+        { "showId": 301, "time": "12:00 PM", "pricePerSeat": 250, "availableSeats": 50 },
+        { "showId": 302, "time": "5:00 PM", "pricePerSeat": 300, "availableSeats": 50 }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## 👤 User Object Structure
+
+```json
+{
+  "id": 1,
+  "username": "agarawala",
+  "password": "pass123",
+  "email": "example@gmail.com",
+  "bookings": [
+    {
+      "bookingId": 1001,
+      "movieId": 1,
+      "showId": 102,
+      "seats": 3,
+      "totalAmount": 750,
+      "status": "confirmed",
+      "bookingDate": "2025-11-14"
+    }
+  ]
+}
+```
+
+---
+
+# 🛣 API Routes
+
+## 1. 👤 User Management
+
+### **POST /signup**
+
+Creates a new user.
+
+#### Request Body:
+
+```json
+{ "username": "agarawala", "password": "1234", "email": "user@example.com" }
+```
+
+#### Response:
+
+```json
+{
+  "message": "User created successfully",
+  "userId": 1
+}
+```
+
+**Status: 201**
+
+---
+
+## 2. 🎬 Movies & Shows
+
+### **GET /movies**
+
+Returns all movies.
+
+### **GET /movies/:movieId**
+
+Returns a specific movie.
+
+If not found:
+
+```json
+{ "message": "Movie not found" }
+```
+
+### **GET /movies/:movieId/shows**
+
+Returns all shows for a movie.
+
+---
+
+## 3. 🎟 Booking Management
+
+### **POST /bookings/:userId**
+
+Creates a new booking.
+
+#### Request Body:
+
+```json
+{ "movieId": 1, "showId": 102, "seats": 3 }
+```
+
+If insufficient seats:
+
+```json
+{ "message": "Not enough seats available" }
+```
+
+#### Successful Response:
+
+```json
+{
+  "message": "Booking successful",
+  "bookingId": 1001,
+  "movieTitle": "Inception",
+  "showTime": "2:00 PM",
+  "seats": 3,
+  "totalAmount": 750
+}
+```
+
+**Status: 201**
+
+---
+
+### **GET /bookings/:userId**
+
+Returns all bookings of a user.
+
+### **GET /bookings/:userId/:bookingId**
+
+Returns a specific booking.
+
+If not found:
+
+```json
+{ "message": "Booking not found" }
+```
+
+---
+
+### **PUT /bookings/:userId/:bookingId**
+
+Updates a booking (only increase seats).
+
+#### Request Body:
+
+```json
+{ "seats": 5 }
+```
+
+#### Response:
+
+```json
+{
+  "message": "Booking updated successfully",
+  "bookingId": 1001,
+  "seats": 5,
+  "totalAmount": 1250
+}
+```
+
+---
+
+### **DELETE /bookings/:userId/:bookingId**
+
+Cancels a booking.
+
+#### Response:
+
+```json
+{ "message": "Booking cancelled successfully" }
+```
+
+---
+
+## 4. 📈 User Summary
+
+### **GET /summary/:userId**
+
+Returns a detailed booking summary.
+
+#### Example Response:
+
+```json
+{
+  "userId": 1,
+  "username": "agarawala",
+  "totalBookings": 4,
+  "totalAmountSpent": 2800,
+  "confirmedBookings": 3,
+  "cancelledBookings": 1,
+  "totalSeatsBooked": 12
+}
+```
+
+> **Note:** Only *confirmed* bookings count toward `totalAmountSpent` and `totalSeatsBooked`.
+
+---
+
+## 🚀 Run the Server
+
+```bash
+node server.js
+```
+
+---
+
+## 🧑‍💻 Author
+
+**Username:** `agarawala`
+
+---
+
+This README explains everything needed to understand, run, and use your Movie Ticket Booking System backend.
