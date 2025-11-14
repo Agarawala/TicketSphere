@@ -16,10 +16,33 @@
             SignUp Page
         </h2>
     </div>
-    <input placeholder="username">
-    <input placeholder="password">
-    <input placeholder="abc@email.com">
-    <button>SignUp</button>
+    <input id="username_input" placeholder="username">
+    <input id="password_input" placeholder="password">
+    <input type="email" id="email_input" placeholder="abc@email.com">
+    <button onclick="fetching()">SignUp</button>
+    <div id="result">
+         
+    </div>
+    <script>
+        async function fetching() {
+            const username = document.getElementById("username_input").value
+            const password = document.getElementById("password_input").value
+            const email = document.getElementById("email_input").value
+            const data = await fetch("http://localhost:3000/signup", {
+                method: "POST",
+                body : JSON.stringify({
+                    username : username,
+                    password,
+                    email
+                }),
+                headers:{
+                    "content-Type": "application/json"
+                }
+            })
+            const final_data = await data.json()
+            document.getElementById("result").innerText = final_data.message + "and_your_user_id" + final_data.userId
+        }
+    </script>
 </body>
 
 </html>

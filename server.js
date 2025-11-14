@@ -2,10 +2,17 @@ const express = require("express");
 const app = express();
 const fs = require("fs");
 const PORT = 3000;
+const cors = require("cors")
 app.use(express.json());
 
-const data = fs.readFileSync("data.json", "utf-8"); //{ users : [], movies : [] }
-const datajson = JSON.parse(data); // obj
+   app.use(cors({
+      origin: 'http://localhost:56825', 
+      methods: ['GET', 'POST'],
+      allowedHeaders: ['Content-Type', 'Authorization']
+    }));
+
+const data = fs.readFileSync("data.json", "utf-8"); 
+const datajson = JSON.parse(data); 
 
 function checkuser(req, res, next) {
   const { username, password, email } = req.body;
@@ -83,7 +90,6 @@ app.get("/movies/:movieId/shows", (req, res) => {
 });
 
 const bookingId = 1001;
-
 app.post("/bookings/:userId", (req, res) => {
   const userId = req.params.userId;
   const { movieId, showId, seats } = req.body;
@@ -171,19 +177,24 @@ app.put("/bookings/:userId/:bookingId", (req, res) => {
   const show = movie.shows.find((show) => show.showId == booking.showId);
 
   if (show.availableSeats + booking.seats >= seats) {
-    show.availableSeats = show.availableSeats - seats;
+    show.availableSeats = show.availableSeats + booking.seats - seats;
     booking.seats = seats;
     booking.totalAmount = seats * show.pricePerSeat;
+
+    fs.writeFileSync("data.json", JSON.stringify(datajson));
+
+   return res.status(200).json({
+      message: "Booking updated successfully",
+      bookingId: bookingId,
+      seats: seats,
+      totalAmount: booking.totalAmount,
+    });
   }
 
-  fs.writeFileSync("data.json", JSON.stringify(datajson));
+  res.json({
+    message: "something wrong"
+  })
 
-  res.status(200).json({
-    message: "Booking updated successfully",
-    bookingId: bookingId,
-    seats: seats,
-    totalAmount: booking.totalAmount,
-  });
 });
 
 app.delete("/bookings/:userId/:bookingId", (req, res) => {
@@ -203,6 +214,7 @@ app.delete("/bookings/:userId/:bookingId", (req, res) => {
   res.status(200).json({
     message: "Booking cancelled successfully",
   });
+
 });
 
 app.get("/summary/:userId", (req, res) => {
