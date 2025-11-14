@@ -2,12 +2,33 @@ const express = require("express");
 const app = express();
 const fs = require("fs");
 const PORT = 3000;
+app.use(express.json());
 
-const data = fs.readFileSync("data.txt", "utf-8"); //{ users : [], movies : [] }
+const data = fs.readFileSync("data.json", "utf-8"); //{ users : [], movies : [] }
 const datajson = JSON.parse(data); // obj
 
+function checkuser(req, res, next) {
+  const { username, password, email } = req.body;
+  let exist = false;
+  for (let i = 0; i < datajson.users.length; i++) {
+    if (
+      datajson.users[i]["username"] == username ||
+      datajson.users[i]["email"] == email
+    ) {
+      exist = true;
+    }
+  }
+
+  if (exist) {
+    return res.json({
+      message: "user already exist",
+    });
+  }
+  next();
+}
+
 let userId = datajson.users.length;
-app.post("/signup", (req, res) => {
+app.post("/signup", checkuser, (req, res) => {
   const { username, password, email } = req.body;
 
   datajson.users.push({
@@ -18,7 +39,7 @@ app.post("/signup", (req, res) => {
     bookings: [],
   });
 
-  fs.writeFileSync("data.txt", JSON.stringify(datajson));
+  fs.writeFileSync("data.json", JSON.stringify(datajson));
   res.status(201).json({
     message: "User created successfully",
     userId: userId,
@@ -46,7 +67,7 @@ app.get("/movies/:movieId", (req, res) => {
   });
 });
 
-app.get("movies/:movieId/shows", (req, res) => {
+app.get("/movies/:movieId/shows", (req, res) => {
   const { movieId } = req.params;
 
   for (let i = 0; i < datajson.movies.length; i++) {
@@ -82,14 +103,15 @@ app.post("/bookings/:userId", (req, res) => {
       totalAmount: seats * show.pricePerSeat,
       status: "confirmed",
       bookingDate:
-        now.getDate() +
-        " " +
+        now.getFullYear() +
+        "-" +
         (parseInt(now.getMonth()) + 1) +
-        " " +
-        now.getFullYear(),
+        "-" +
+        now.getDate(),
     });
+
     show.availableSeats = show.availableSeats - seats;
-    fs.writeFileSync("data.txt", JSON.stringify(datajson));
+    fs.writeFileSync("data.json", JSON.stringify(datajson));
 
     return res.status(201).json({
       message: "Booking successful",
@@ -107,7 +129,7 @@ app.post("/bookings/:userId", (req, res) => {
 });
 
 app.get("/bookings/:userId", (req, res) => {
-  const userId = res.params.userId;
+  const userId = req.params.userId;
   const user = datajson.users.find((user) => user.id == userId);
 
   if (user) {
@@ -124,16 +146,14 @@ app.get("/bookings/:userId", (req, res) => {
 app.get("/bookings/:userId/:bookingId", (req, res) => {
   const { userId, bookingId } = req.params;
   const user = datajson.users.find((user) => user.id == userId);
-  const booking = user.find((user) => {
-    user.bookingId == bookingId;
-  });
+  const booking = user.bookings.find((user) => user.bookingId == bookingId);
 
   if (booking) {
     return res.json({
       message: booking,
     });
   }
-  res.status(404)({
+  res.status(404).json({
     message: "Booking not found",
   });
 });
@@ -156,7 +176,7 @@ app.put("/bookings/:userId/:bookingId", (req, res) => {
     booking.totalAmount = seats * show.pricePerSeat;
   }
 
-  fs.writeFileSync("data.txt", JSON.stringify(datajson));
+  fs.writeFileSync("data.json", JSON.stringify(datajson));
 
   res.status(200).json({
     message: "Booking updated successfully",
@@ -174,11 +194,11 @@ app.delete("/bookings/:userId/:bookingId", (req, res) => {
     (booking) => (booking.bookingId = bookingId)
   );
   const movie = datajson.movies.find((movie) => movie.id == booking.movieId);
-  const show = movie.find((show) => show.showId == booking.showId);
+  const show = movie.shows.find((show) => show.showId == booking.showId);
 
   show.availableSeats = show.availableSeats + booking.seats;
   booking.status = "cancelled";
-  fs.writeFileSync("data.txt", JSON.stringify(datajson));
+  fs.writeFileSync("data.json", JSON.stringify(datajson));
 
   res.status(200).json({
     message: "Booking cancelled successfully",
@@ -191,7 +211,9 @@ app.get("/summary/:userId", (req, res) => {
   let ans1 = 0;
   let ans2 = 0;
   let ans3 = 0;
-  for (let i = 0; i < user.booking.length; i++) {
+  let ans4 = 0;
+
+  for (let i = 0; i < user.bookings.length; i++) {
     if (user.bookings[i].status == "confirmed") {
       ans1 = ans1 + user.bookings[i].totalAmount;
       ans2 = ans2++;
@@ -201,11 +223,12 @@ app.get("/summary/:userId", (req, res) => {
       ans3++;
     }
   }
+
   if (user) {
     return res.json({
       userId: userId,
       username: user.username,
-      totalBookings: user.bookings.length + 1,
+      totalBookings: user.bookings.length,
       totalAmountSpent: ans1,
       confirmedBookings: ans2,
       cancelledBookings: ans3,
@@ -219,4 +242,4 @@ app.get("/summary/:userId", (req, res) => {
 
 app.listen(PORT, () => {
   console.log("listening");
-})
+});
