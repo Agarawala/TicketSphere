@@ -108,12 +108,7 @@ app.post("/bookings/:userId", (req, res) => {
       seats: seats,
       totalAmount: seats * show.pricePerSeat,
       status: "confirmed",
-      bookingDate:
-        now.getFullYear() +
-        "-" +
-        (parseInt(now.getMonth()) + 1) +
-        "-" +
-        now.getDate(),
+      bookingDate: now.getFullYear() + "-" + (now.getMonth()+1) + "-" + now.getDate(),
     });
 
     show.availableSeats = show.availableSeats - seats;
